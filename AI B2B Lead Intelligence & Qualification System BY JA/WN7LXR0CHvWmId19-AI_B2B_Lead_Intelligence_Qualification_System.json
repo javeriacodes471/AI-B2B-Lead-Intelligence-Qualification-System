@@ -1,0 +1,679 @@
+{
+  "name": "AI B2B Lead Intelligence & Qualification System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intakes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        -96
+      ],
+      "id": "f341d5bd-1cfb-4565-b95d-54d6298d1d85",
+      "name": "Webhook",
+      "webhookId": "eb0fcc33-8cc1-4e27-a3f5-da9eafa958ee"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -32
+      ],
+      "id": "479aca94-2532-401e-aa4b-ebce64f25a90",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f759e4d3-d771-4021-aae8-0d5b1ee2cdf7",
+              "name": "=email",
+              "value": "={{ $('Qualify & Score Enriched Lead').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "e0f58b29-c56b-44e1-ab17-711668560ff2",
+              "name": "=company",
+              "value": "={{ $('Qualify & Score Enriched Lead').item.json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "d21f9e5b-e113-469c-a26d-216f43df3105",
+              "name": "=score",
+              "value": "={{ $('Qualify & Score Enriched Lead').item.json.leadScore }}",
+              "type": "number"
+            },
+            {
+              "id": "c2f2c569-e0dd-48ac-bb98-10f3371cbf35",
+              "name": "=qualification",
+              "value": "={{ $('Qualify & Score Enriched Lead').item.json.qualification }}",
+              "type": "string"
+            },
+            {
+              "id": "97d9f4d2-af8d-4294-a072-6f8d949e4277",
+              "name": "=scoringReasons",
+              "value": "={{ $('Qualify & Score Enriched Lead').item.json.scoringReasons }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2112,
+        -272
+      ],
+      "id": "048304c0-180e-48b2-861c-871cfb148bce",
+      "name": "prepare sales alert"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BJ3MTK6HK",
+          "mode": "list",
+          "cachedResultName": "bookings"
+        },
+        "text": "=🔥 NEW QUALIFIED LEAD  Name: {{ $json.firstName }} {{ $json.lastName }} Email: {{ $json.email }} Company: {{ $json.company }} Score: {{ $json.score }}/100 Source: {{ $json.source }}  Qualification: {{ $json.qualification }}  Reasons: {{ $json.scoringReasons }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        2368,
+        -272
+      ],
+      "id": "da6ee2a4-c581-4ade-99fa-b2f39095768c",
+      "name": "Notify Team",
+      "webhookId": "bde7e7d2-cba2-4abd-aacf-b46262b5c470",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "48sgzATSwIEoKVAD",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "402daa5b-faf2-4771-9759-93467e9151e7",
+              "leftValue": "={{ $json.leadScore }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1088,
+        -80
+      ],
+      "id": "af8f5bb7-caa1-4f59-a7e3-3a5bff5d6177",
+      "name": "if qualified"
+    },
+    {
+      "parameters": {
+        "url": "https://api.companyenrich.com/companies/enrich",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.email.split('@')[1].toLowerCase() }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer Ev2kBPNVS56QvTxqJtQncm"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        336,
+        -96
+      ],
+      "id": "d9e6788a-e08e-4ac9-ba39-56cdccb710c0",
+      "name": "Company enrichment"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        640,
+        -96
+      ],
+      "id": "8a6fdf08-807b-4be8-b80d-4b1df4f07333",
+      "name": "Merge Enriched lead"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const lead = $json;\n\n// -----------------------------\n// BASIC LEAD DATA\n// -----------------------------\n\nconst firstName = lead.firstName || \"\";\nconst lastName = lead.lastName || \"\";\nconst email = String(lead.email || \"\").toLowerCase();\nconst company = lead.company || \"\";\n\nconst service = lead.service || \"\";\nconst budget = lead.budget || \"\";\nconst message = lead.message || \"\";\n\n\n// -----------------------------\n// ENRICHED COMPANY DATA\n// -----------------------------\n\nconst industry =\n  lead.industry ||\n  lead.industries ||\n  \"\";\n\nconst employees = Number(\n  lead.employee_count ||\n  lead.employees ||\n  0\n);\n\nconst country =\n  lead.country ||\n  lead.location ||\n  \"\";\n\nconst website =\n  lead.website ||\n  lead.domain ||\n  \"\";\n\n\n// -----------------------------\n// LEAD SCORING\n// -----------------------------\n\nlet score = 0;\nlet reasons = [];\n\n\n// COMPANY FIT\n\nif (company && company.toLowerCase() !== \"unknown\") {\n  score += 10;\n  reasons.push(\"Company identified\");\n}\n\nif (industry) {\n  score += 10;\n  reasons.push(\"Industry data available\");\n}\n\nif (employees >= 10) {\n  score += 15;\n  reasons.push(\"Established company size\");\n}\n\n\n// PROJECT INTENT\n\nconst intentKeywords = [\n  \"automation\",\n  \"automate\",\n  \"crm\",\n  \"lead generation\",\n  \"workflow\",\n  \"integration\",\n  \"ai\",\n  \"system\"\n];\n\nif (\n  intentKeywords.some(keyword =>\n    service.toLowerCase().includes(keyword) ||\n    message.toLowerCase().includes(keyword)\n  )\n) {\n  score += 20;\n  reasons.push(\"Strong project intent\");\n}\n\nif (message.length >= 100) {\n  score += 10;\n  reasons.push(\"Detailed project requirement\");\n}\n\n\n// BUDGET\n\nconst budgetText = budget.toLowerCase();\n\nif (\n  budgetText.includes(\"5,000\") ||\n  budgetText.includes(\"10,000\") ||\n  budgetText.includes(\"10,000+\")\n) {\n  score += 20;\n  reasons.push(\"High project budget\");\n}\n\nelse if (budgetText.includes(\"1,000\")) {\n  score += 15;\n  reasons.push(\"Qualified project budget\");\n}\n\nelse if (budgetText.includes(\"not sure\")) {\n  score += 5;\n  reasons.push(\"Budget not defined\");\n}\n\n\n// BUSINESS EMAIL\n\nconst personalEmailDomains = [\n  \"gmail.com\",\n  \"yahoo.com\",\n  \"hotmail.com\",\n  \"outlook.com\",\n  \"icloud.com\"\n];\n\nconst isPersonalEmail = personalEmailDomains.some(\n  domain => email.endsWith(\"@\" + domain)\n);\n\nif (email && !isPersonalEmail) {\n  score += 10;\n  reasons.push(\"Business email\");\n}\n\n\n// -----------------------------\n// QUALIFICATION\n// -----------------------------\n\nlet qualification;\n\nif (score >= 70) {\n  qualification = \"Qualified\";\n}\nelse if (score >= 40) {\n  qualification = \"Review\";\n}\nelse {\n  qualification = \"Unqualified\";\n}\n\n\n// -----------------------------\n// CLEAN OUTPUT\n// -----------------------------\n\nreturn {\n  json: {\n    // IMPORTANT: CRM PERSON ID\n    crmPersonId: lead.crmPersonId || \"\",\n\n    firstName,\n    lastName,\n    email,\n    company,\n\n    service,\n    budget,\n    message,\n\n    companyIndustry: industry,\n    companySize: employees || null,\n    companyCountry: country,\n    companyWebsite: website,\n\n    leadScore: score,\n    qualification,\n    scoringReasons: reasons.join(\", \"),\n\n    processedAt: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -96
+      ],
+      "id": "9d28fbca-ee9b-4fa6-9839-66823de1d89d",
+      "name": "Qualify & Score Enriched Lead"
+    },
+    {
+      "parameters": {
+        "url": "https://javeria.twenty.com/rest/people",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter[emails][primaryEmail][eq]",
+              "value": "={{ $json.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjZjYmFkN2Q1LTIzYzQtNDIyNS1hNjVmLTFmMmM0YTY2NjVjMyJ9.eyJzdWIiOiJlYTQ1Mzg0NC01ZWY1LTQ1NzAtOTIwYS1kYjRlNjgxODI5Y2EiLCJ0eXBlIjoiQVBJX0tFWSIsIndvcmtzcGFjZUlkIjoiZWE0NTM4NDQtNWVmNS00NTcwLTkyMGEtZGI0ZTY4MTgyOWNhIiwiaWF0IjoxNzg0ODcxMzgwLCJleHAiOjQ5Mzg0NzEzNzksImp0aSI6ImEzOTljMDAzLWZlODItNGUwZS05Nzc4LTkyYTdiZGUzMGE4OSJ9.XbevtwaznzeZ9ntFYSck2zxCxHhDTmPqgGvhmOUEpfABg4jwCuyOYrjhoFLtkvS61fRADCJXF123g_Jp2uT3iA"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1424,
+        -176
+      ],
+      "id": "7658d569-67be-43e1-a556-8eb1b54a2c1f",
+      "name": "search from crm"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0183b028-55b6-4521-9665-aea91b11d586",
+              "leftValue": "={{ $json.data.people.some(person => person.emails?.primaryEmail === $('if qualified').item.json.email) }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1648,
+        -176
+      ],
+      "id": "86cd33c3-76e7-407d-81cb-299bc52ce81c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://javeria.twenty.com/rest/people/{{ $('search from crm').item.json.data.people[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjZjYmFkN2Q1LTIzYzQtNDIyNS1hNjVmLTFmMmM0YTY2NjVjMyJ9.eyJzdWIiOiJlYTQ1Mzg0NC01ZWY1LTQ1NzAtOTIwYS1kYjRlNjgxODI5Y2EiLCJ0eXBlIjoiQVBJX0tFWSIsIndvcmtzcGFjZUlkIjoiZWE0NTM4NDQtNWVmNS00NTcwLTkyMGEtZGI0ZTY4MTgyOWNhIiwiaWF0IjoxNzg0ODcxMzgwLCJleHAiOjQ5Mzg0NzEzNzksImp0aSI6ImEzOTljMDAzLWZlODItNGUwZS05Nzc4LTkyYTdiZGUzMGE4OSJ9.XbevtwaznzeZ9ntFYSck2zxCxHhDTmPqgGvhmOUEpfABg4jwCuyOYrjhoFLtkvS61fRADCJXF123g_Jp2uT3iA"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jobTitle\": \"Qualified Lead\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1888,
+        -272
+      ],
+      "id": "827281fb-8484-421c-9390-1afd9f057bc0",
+      "name": "update in crm"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://javeria.twenty.com/rest/people",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjZjYmFkN2Q1LTIzYzQtNDIyNS1hNjVmLTFmMmM0YTY2NjVjMyJ9.eyJzdWIiOiJlYTQ1Mzg0NC01ZWY1LTQ1NzAtOTIwYS1kYjRlNjgxODI5Y2EiLCJ0eXBlIjoiQVBJX0tFWSIsIndvcmtzcGFjZUlkIjoiZWE0NTM4NDQtNWVmNS00NTcwLTkyMGEtZGI0ZTY4MTgyOWNhIiwiaWF0IjoxNzg0ODcxMzgwLCJleHAiOjQ5Mzg0NzEzNzksImp0aSI6ImEzOTljMDAzLWZlODItNGUwZS05Nzc4LTkyYTdiZGUzMGE4OSJ9.XbevtwaznzeZ9ntFYSck2zxCxHhDTmPqgGvhmOUEpfABg4jwCuyOYrjhoFLtkvS61fRADCJXF123g_Jp2uT3iA"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": {\n    \"firstName\": \"{{ $('Qualify & Score Enriched Lead').item.json.firstName }}\",\n    \"lastName\": \"{{ $('Qualify & Score Enriched Lead').item.json.lastName }}\"\n  },\n  \"emails\": {\n    \"primaryEmail\": \"{{ $('Qualify & Score Enriched Lead').item.json.email }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1920,
+        -112
+      ],
+      "id": "de57ae4f-0b06-4122-9f22-3db9175e2c51",
+      "name": "Create New CRM Person"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f759e4d3-d771-4021-aae8-0d5b1ee2cdf7",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "e0f58b29-c56b-44e1-ab17-711668560ff2",
+              "name": "company",
+              "value": "={{ $json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "d21f9e5b-e113-469c-a26d-216f43df3105",
+              "name": "score",
+              "value": "={{ $json.score }}",
+              "type": "number"
+            },
+            {
+              "id": "c2f2c569-e0dd-48ac-bb98-10f3371cbf35",
+              "name": "qualification",
+              "value": "={{ $json.qualification }}",
+              "type": "string"
+            },
+            {
+              "id": "1b7ac452-3d0a-49b1-a1d2-94e28d153203",
+              "name": "score",
+              "value": "={{ $json.score }}",
+              "type": "string"
+            },
+            {
+              "id": "97d9f4d2-af8d-4294-a072-6f8d949e4277",
+              "name": "scoringReasons",
+              "value": "={{ $json.scoringReasons }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2144,
+        -112
+      ],
+      "id": "9acb42ea-9b19-4a4e-946e-0d1b07aad140",
+      "name": "prepare sales alert1"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BJ3MTK6HK",
+          "mode": "list",
+          "cachedResultName": "bookings"
+        },
+        "text": "=🔥 NEW QUALIFIED LEAD  Name: {{ $json.firstName }} {{ $json.lastName }} Email: {{ $json.email }} Company: {{ $json.company }} Score: {{ $json.score }}/100 Source: {{ $json.source }}  Qualification: {{ $json.qualification }}  Reasons: {{ $json.scoringReasons }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        2384,
+        -112
+      ],
+      "id": "f2051c35-6e12-4260-b234-40678db1f8de",
+      "name": "Notify Team1",
+      "webhookId": "bde7e7d2-cba2-4abd-aacf-b46262b5c470",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "48sgzATSwIEoKVAD",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "AI B2B Lead Intelligence & Qualification System\n\n✓ Captures leads from website form\n✓ Enriches company data\n✓ Qualifies leads based on company fit, project and budget\n✓ Checks CRM for existing leads using email\n✓ Updates existing leads or creates new CRM records\n✓ Sends qualified lead alerts to Slack\n\nPublished by: Javeria Afzal\nDate: 23 July 2026",
+        "height": 368,
+        "width": 416,
+        "color": "#964040"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        944,
+        -496
+      ],
+      "typeVersion": 1,
+      "id": "2d3b71de-fda7-48dd-97d8-1bac5735652f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22e11403-66ae-41e9-86d9-d27a62e7ab20",
+              "name": "firstName",
+              "value": "={{ $json.body.firstName }}",
+              "type": "string"
+            },
+            {
+              "id": "af49bba6-9fde-4016-a63b-89a9bce59009",
+              "name": "lastName",
+              "value": "={{ $json.body.lastName }}",
+              "type": "string"
+            },
+            {
+              "id": "752296fb-3f53-4cbb-91f1-f3fb9ebdc1b0",
+              "name": "=email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "31017f4b-7e8f-443e-be67-a62d2d3eb613",
+              "name": "company",
+              "value": "={{ $json.body.company }}",
+              "type": "string"
+            },
+            {
+              "id": "c16d932b-4b2c-4222-b1e4-e4f7964cb645",
+              "name": "=service",
+              "value": "={{ $json.body.service }}",
+              "type": "string"
+            },
+            {
+              "id": "01e3e178-9bd5-4946-81f0-e0703c52e17c",
+              "name": "budget",
+              "value": "={{ $json.body.budget }}",
+              "type": "string"
+            },
+            {
+              "id": "dc723449-b91e-4297-972c-0f657ac98e0a",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "84fed980-30c0-4905-a36a-1244270f7ee3",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        -96
+      ],
+      "id": "94fa872f-2da6-4775-83b7-e3ee6ff438a5",
+      "name": "normalize lead"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "normalize lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare sales alert": {
+      "main": [
+        [
+          {
+            "node": "Notify Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Team": {
+      "main": [
+        []
+      ]
+    },
+    "if qualified": {
+      "main": [
+        [
+          {
+            "node": "search from crm",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company enrichment": {
+      "main": [
+        [
+          {
+            "node": "Merge Enriched lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Enriched lead": {
+      "main": [
+        [
+          {
+            "node": "Qualify & Score Enriched Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualify & Score Enriched Lead": {
+      "main": [
+        [
+          {
+            "node": "if qualified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search from crm": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "update in crm",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New CRM Person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update in crm": {
+      "main": [
+        [
+          {
+            "node": "prepare sales alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New CRM Person": {
+      "main": [
+        [
+          {
+            "node": "prepare sales alert1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare sales alert1": {
+      "main": [
+        [
+          {
+            "node": "Notify Team1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "normalize lead": {
+      "main": [
+        [
+          {
+            "node": "Company enrichment",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Enriched lead",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
